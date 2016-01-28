@@ -2,6 +2,9 @@
 set -e
 
 print_summaries() {
+  local internalGroup="Sub Internals"
+
+  local groups=("$internalGroup")
   local commands=()
   local summaries=()
   local longest_command=0
@@ -10,15 +13,31 @@ print_summaries() {
   for command in $(sub-commands); do
     local file="$(command_path "$command")"
     if [ ! -h "$file" ]; then
+
+      local group="$(group "$file")"
       local summary="$(summary "$file")"
+
+      if [ ! -n "$group" ]; then
+        group="$internalGroup"
+      fi
+
+      if [[ ! "${groups[@]}" =~ "$group" ]]; then
+        groups+=("$group")
+      fi
+
       if [ -n "$summary" ]; then
-        commands["${#commands[@]}"]="$command"
+
+        # Add the group name before the command name
+        # so it's possible to filter by group when listing
+        # the commands.
+        commands["${#commands[@]}"]="$group:$command"
         summaries["${#summaries[@]}"]="$summary"
 
         if [ "${#command}" -gt "$longest_command" ]; then
           longest_command="${#command}"
         fi
       fi
+
     fi
   done
 
@@ -26,9 +45,28 @@ print_summaries() {
   local columns="$(tput cols)"
   local summary_length=$(( $columns - $longest_command - 5 ))
 
-  for (( index=0; index < ${#commands[@]}; index++ )); do
-    printf "   %-${longest_command}s  %s\n" "${commands[$index]}" \
-      "$(truncate "$summary_length" "${summaries[$index]}")"
+  for (( index = 0; index < "${#groups[@]}"; index++ )); do
+
+    currentGroup="${groups[$index]}"
+
+    # print empty line and then the group
+    echo
+    echo "$currentGroup"
+
+    # and then iterate all the commands and get the group
+    # and see if the command starts with the group.
+    for (( c = 0; c < "${#commands[@]}"; c++ )); do
+      rawCommand="${commands[$c]}"
+
+      groupName=${rawCommand%%:*}
+      theCommand=${rawCommand#*:}
+
+      if [[ "$groupName" == "$currentGroup" ]]; then
+        printf "   %-${longest_command}s  %s\n" "$theCommand" \
+        "$(truncate "$summary_length" "${summaries[$c]}")"
+      fi
+    done
+
   done
 }
 
@@ -48,6 +86,10 @@ print_help() {
 
 command_path() {
   command -v "sub-$command" || command -v "sub-sh-$command" || true
+}
+
+group() {
+  sed -n "s/^# Group: \(.*\)/\1/p" "$1"
 }
 
 summary() {
