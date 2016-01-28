@@ -14,7 +14,11 @@ echo "Preparing your '$SUBNAME' sub!"
 
 if [ "$NAME" != "sub" ]; then
   rm bin/sub
-  mv share/sub share/$SUBNAME
+
+  sed "s/sub/$SUBNAME/g;s/SUB_ROOT/$ENVNAME/g" install.sh > install.sh.tmp
+  cat install.sh.tmp > install.sh
+  rm install.sh.tmp
+  chmod a+x install.sh
 
   for file in **/sub*; do
     sed "s/sub/$SUBNAME/g;s/SUB_ROOT/$ENVNAME/g" "$file" > $(echo $file | sed "s/sub/$SUBNAME/")
