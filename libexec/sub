@@ -20,6 +20,8 @@ abs_dirname() {
 }
 
 libexec_path="$(abs_dirname "$0")"
+export _SUB_NAME="sub"
+export _SUBROOT="$(abs_dirname "$libexec_path")"
 export _SUB_ROOT="$(abs_dirname "$libexec_path")"
 export PATH="${libexec_path}:$PATH"
 

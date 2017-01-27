@@ -21,7 +21,7 @@ if [ "$NAME" != "sub" ]; then
   chmod a+x install.sh
 
   for file in **/sub*; do
-    sed "s/sub/$SUBNAME/g;s/SUB_ROOT/$ENVNAME/g" "$file" > $(echo $file | sed "s/sub/$SUBNAME/")
+    sed "s/sub/$SUBNAME/g;s/SUB_ROOT/$ENVNAME/g;s/SUBROOT/SUB_ROOT/g" "$file" > $(echo $file | sed "s/sub/$SUBNAME/")
     rm $file
   done
 
